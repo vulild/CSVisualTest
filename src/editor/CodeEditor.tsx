@@ -12,11 +12,26 @@ import { registerCSharpLanguage } from './monacoCSharpLsp';
 interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
+  breakpoints?: number[];
+  currentDebugLine?: number | null;
+  onBreakpointsChange?: (breakpoints: number[]) => void;
 }
 
-export function CodeEditor({ value, onChange }: CodeEditorProps) {
+export function CodeEditor({
+  value,
+  onChange,
+  breakpoints = [],
+  currentDebugLine = null,
+  onBreakpointsChange,
+}: CodeEditorProps) {
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<typeof Monaco | null>(null);
+  const decorationIdsRef = useRef<string[]>([]);
+  const breakpointsRef = useRef<number[]>(breakpoints);
+
+  useEffect(() => {
+    breakpointsRef.current = breakpoints;
+  }, [breakpoints]);
 
   const handleBeforeMount = (monaco: typeof Monaco) => {
     registerCSharpLanguage(monaco);
@@ -25,6 +40,22 @@ export function CodeEditor({ value, onChange }: CodeEditorProps) {
   const handleMount = (editor: Monaco.editor.IStandaloneCodeEditor, monaco: typeof Monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
+    editor.onMouseDown((event) => {
+      const isBreakpointTarget =
+        event.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN ||
+        event.target.type === monaco.editor.MouseTargetType.GUTTER_LINE_NUMBERS;
+      const lineNumber = event.target.position?.lineNumber;
+
+      if (!isBreakpointTarget || !lineNumber || !onBreakpointsChange) {
+        return;
+      }
+
+      const activeBreakpoints = breakpointsRef.current;
+      const nextBreakpoints = activeBreakpoints.includes(lineNumber)
+        ? activeBreakpoints.filter((line) => line !== lineNumber)
+        : [...activeBreakpoints, lineNumber].sort((left, right) => left - right);
+      onBreakpointsChange(nextBreakpoints);
+    });
   };
 
   useEffect(() => {
@@ -65,6 +96,39 @@ export function CodeEditor({ value, onChange }: CodeEditorProps) {
     };
   }, [value]);
 
+  useEffect(() => {
+    const monaco = monacoRef.current;
+    const editor = editorRef.current;
+    if (!monaco || !editor) {
+      return;
+    }
+
+    const decorations: Monaco.editor.IModelDeltaDecoration[] = [
+      ...breakpoints.map((lineNumber) => ({
+        range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+        options: {
+          isWholeLine: false,
+          glyphMarginClassName: 'breakpoint-glyph',
+          glyphMarginHoverMessage: { value: `断点：第 ${lineNumber} 行` },
+        },
+      })),
+      ...(currentDebugLine
+        ? [
+            {
+              range: new monaco.Range(currentDebugLine, 1, currentDebugLine, 1),
+              options: {
+                isWholeLine: true,
+                className: 'debug-current-line',
+                glyphMarginClassName: 'debug-current-glyph',
+              },
+            },
+          ]
+        : []),
+    ];
+
+    decorationIdsRef.current = editor.deltaDecorations(decorationIdsRef.current, decorations);
+  }, [breakpoints, currentDebugLine]);
+
   return (
     <section className="panel code-panel" aria-labelledby="code-editor-title">
       <div className="panel-header">
@@ -87,6 +151,7 @@ export function CodeEditor({ value, onChange }: CodeEditorProps) {
             automaticLayout: true,
             fontFamily: '"SFMono-Regular", Consolas, "Liberation Mono", monospace',
             fontSize: 14,
+            glyphMargin: true,
             minimap: { enabled: false },
             scrollBeyondLastLine: false,
             tabSize: 4,

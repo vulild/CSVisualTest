@@ -41,6 +41,11 @@ namespace DemoApp
 
             return message;
         }
+
+        public static void Main()
+        {
+            Console.WriteLine(new Greeter().SayHello("Scratch"));
+        }
     }
 }
 `;

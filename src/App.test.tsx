@@ -14,6 +14,9 @@ describe('App', () => {
 
     expect(screen.getByLabelText('常用语法工具箱')).toBeInTheDocument();
     expect(screen.getByText('Roslyn 全语法树')).toBeInTheDocument();
+    expect(screen.getByLabelText('IDE 运行调试工具栏')).toBeInTheDocument();
+    expect(screen.getByText('输出面板')).toBeInTheDocument();
+    expect(screen.getByText('变量监控')).toBeInTheDocument();
     expect(screen.getByText('for 循环')).toBeInTheDocument();
     expect(screen.getByText('try/catch')).toBeInTheDocument();
   });

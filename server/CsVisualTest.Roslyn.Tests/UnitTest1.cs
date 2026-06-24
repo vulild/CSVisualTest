@@ -90,6 +90,59 @@ public class RoslynParserTests
         Assert.Contains("Count", hover!.Contents);
     }
 
+    [Fact]
+    public async Task RunAsync_CompilesAndCapturesConsoleOutput()
+    {
+        var service = new CSharpRunService();
+        var result = await service.RunAsync("""
+            using System;
+
+            Console.WriteLine("Hello IDE");
+            """);
+
+        Assert.True(result.Success);
+        Assert.Contains(result.Output, line => line.Stream == "stdout" && line.Text == "Hello IDE");
+    }
+
+    [Fact]
+    public async Task RunAsync_ReturnsCompilationDiagnostics()
+    {
+        var service = new CSharpRunService();
+        var result = await service.RunAsync("Console.WriteLine(");
+
+        Assert.False(result.Success);
+        Assert.NotEmpty(result.Diagnostics);
+    }
+
+    [Fact]
+    public void DebugService_SupportsBreakpointsStepAndVariables()
+    {
+        var service = new CSharpDebugService();
+        var source = """
+            using System;
+
+            var name = "IDE";
+            var message = "Hello " + name;
+            Console.WriteLine(message);
+            """;
+
+        var started = service.Start(source, new[] { 4 });
+        Assert.Equal(3, started.CurrentLine);
+
+        var paused = service.Continue(started.SessionId);
+        Assert.True(paused.HitBreakpoint);
+        Assert.Equal(4, paused.CurrentLine);
+        Assert.Contains(paused.Variables, variable => variable.Name == "name" && variable.Value == "IDE");
+
+        var stepped = service.Step(started.SessionId);
+        Assert.Equal(5, stepped.CurrentLine);
+        Assert.Contains(stepped.Variables, variable => variable.Name == "message" && variable.Value == "Hello IDE");
+
+        var completed = service.Continue(started.SessionId);
+        Assert.Equal("Completed", completed.State);
+        Assert.Contains(completed.Output, line => line.Text == "Hello IDE");
+    }
+
     private static IEnumerable<string> FlattenKinds(RoslynSyntaxNodeDto node)
     {
         yield return node.Kind;

@@ -10,6 +10,17 @@ import type { StatementBlockType, ToolboxItem, VisualBlock } from './blocks/bloc
 import { DEFAULT_CSHARP_CODE } from './core/parser/parseCSharp';
 import { parseCSharpWithRoslyn } from './core/parser/parseCSharpRoslyn';
 import type { RoslynParseResponse } from './core/parser/RoslynSyntax';
+import {
+  continueDebugSession,
+  runCSharpCode,
+  startDebugSession,
+  stepDebugSession,
+  stopDebugSession,
+} from './debug/debugClient';
+import { DebugToolbar } from './debug/DebugToolbar';
+import type { DebugSession, DebugState, IdeOutputLine, VariableInfo } from './debug/debugTypes';
+import { OutputPanel } from './debug/OutputPanel';
+import { VariablesPanel } from './debug/VariablesPanel';
 import { CodeEditor } from './editor/CodeEditor';
 import {
   addStatementBlock,
@@ -29,6 +40,12 @@ export function App() {
   const [diagnostics, setDiagnostics] = useState<string[]>(initialState.diagnostics);
   const [roslynResult, setRoslynResult] = useState<RoslynParseResponse | null>(null);
   const [roslynStatus, setRoslynStatus] = useState<'idle' | 'loading' | 'ready' | 'unavailable'>('idle');
+  const [breakpoints, setBreakpoints] = useState<number[]>([]);
+  const [debugState, setDebugState] = useState<DebugState>('Idle');
+  const [debugSessionId, setDebugSessionId] = useState('');
+  const [currentDebugLine, setCurrentDebugLine] = useState<number | null>(null);
+  const [variables, setVariables] = useState<VariableInfo[]>([]);
+  const [outputLines, setOutputLines] = useState<IdeOutputLine[]>([]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -83,6 +100,64 @@ export function App() {
     commitBlocks(deleteBlock(blocks, blockId));
   };
 
+  const applyDebugSession = (session: DebugSession) => {
+    setDebugSessionId(session.sessionId);
+    setDebugState(session.state);
+    setCurrentDebugLine(session.currentLine);
+    setVariables(session.variables);
+    setOutputLines(session.output);
+  };
+
+  const handleRun = async () => {
+    setDebugState('Running');
+    setCurrentDebugLine(null);
+    setVariables([]);
+    setOutputLines([{ stream: 'stdout', text: '启动 C# 程序...' }]);
+    const result = await runCSharpCode(code);
+    setDebugState(result.success ? 'Completed' : 'Stopped');
+    setOutputLines([
+      ...result.output,
+      ...result.diagnostics.map((diagnostic) => ({
+        stream: 'stderr',
+        text: `${diagnostic.id}: ${diagnostic.message}`,
+      })),
+      { stream: result.success ? 'stdout' : 'stderr', text: `进程退出码：${result.exitCode}` },
+    ]);
+  };
+
+  const handleDebug = async () => {
+    const session = await startDebugSession(code, breakpoints);
+    applyDebugSession(session);
+    setOutputLines([
+      { stream: 'stdout', text: breakpoints.length > 0 ? '调试会话已启动，断点已加载。' : '调试会话已启动。' },
+      ...session.output,
+    ]);
+  };
+
+  const handleContinue = async () => {
+    if (!debugSessionId) {
+      return;
+    }
+
+    applyDebugSession(await continueDebugSession(debugSessionId));
+  };
+
+  const handleStep = async () => {
+    if (!debugSessionId) {
+      return;
+    }
+
+    applyDebugSession(await stepDebugSession(debugSessionId));
+  };
+
+  const handleStop = async () => {
+    if (!debugSessionId) {
+      return;
+    }
+
+    applyDebugSession(await stopDebugSession(debugSessionId));
+  };
+
   return (
     <main className="app-shell">
       <header className="hero">
@@ -106,8 +181,24 @@ export function App() {
         </aside>
       ) : null}
 
+      <DebugToolbar
+        state={debugState}
+        breakpoints={breakpoints}
+        onRun={handleRun}
+        onDebug={handleDebug}
+        onContinue={handleContinue}
+        onStep={handleStep}
+        onStop={handleStop}
+      />
+
       <div className="workspace-grid">
-        <CodeEditor value={code} onChange={handleCodeChange} />
+        <CodeEditor
+          value={code}
+          onChange={handleCodeChange}
+          breakpoints={breakpoints}
+          currentDebugLine={currentDebugLine}
+          onBreakpointsChange={setBreakpoints}
+        />
         <BlockWorkspace
           blocks={blocks}
           onFieldChange={handleFieldChange}
@@ -116,6 +207,11 @@ export function App() {
           onMoveStatement={handleMoveStatement}
           onDeleteBlock={handleDeleteBlock}
         />
+      </div>
+
+      <div className="ide-bottom-grid">
+        <OutputPanel lines={outputLines} />
+        <VariablesPanel variables={variables} currentLine={currentDebugLine} />
       </div>
 
       <RoslynSyntaxTreePanel result={roslynResult} status={roslynStatus} />

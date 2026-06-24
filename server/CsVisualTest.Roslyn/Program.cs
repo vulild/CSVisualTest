@@ -13,6 +13,8 @@ builder.Services.AddCors(options =>
 });
 builder.Services.AddSingleton<RoslynParser>();
 builder.Services.AddSingleton<CSharpLanguageService>();
+builder.Services.AddSingleton<CSharpRunService>();
+builder.Services.AddSingleton<CSharpDebugService>();
 
 var app = builder.Build();
 
@@ -36,6 +38,26 @@ app.MapPost("/api/lsp/hover", async (CSharpPositionRequest request, CSharpLangua
 {
     var response = await languageService.GetHoverAsync(request.Source, request.Position);
     return response is null ? Results.NoContent() : Results.Ok(response);
+});
+app.MapPost("/api/run", async (CSharpRunRequest request, CSharpRunService runService, CancellationToken cancellationToken) =>
+{
+    return Results.Ok(await runService.RunAsync(request.Source, cancellationToken));
+});
+app.MapPost("/api/debug/start", (DebugStartRequest request, CSharpDebugService debugService) =>
+{
+    return Results.Ok(debugService.Start(request.Source, request.Breakpoints));
+});
+app.MapPost("/api/debug/step", (DebugActionRequest request, CSharpDebugService debugService) =>
+{
+    return Results.Ok(debugService.Step(request.SessionId));
+});
+app.MapPost("/api/debug/continue", (DebugActionRequest request, CSharpDebugService debugService) =>
+{
+    return Results.Ok(debugService.Continue(request.SessionId));
+});
+app.MapPost("/api/debug/stop", (DebugActionRequest request, CSharpDebugService debugService) =>
+{
+    return Results.Ok(debugService.Stop(request.SessionId));
 });
 
 app.Run();
