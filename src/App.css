@@ -65,10 +65,41 @@ button {
   opacity: 0.8;
 }
 
-.workspace-grid {
+.workspace-tabs {
   display: grid;
-  grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
-  gap: 20px;
+  gap: 12px;
+}
+
+.tab-list,
+.visual-mode-tabs {
+  display: inline-flex;
+  gap: 6px;
+  width: fit-content;
+  padding: 5px;
+  background: #dfe8ff;
+  border: 1px solid #c6d5ff;
+  border-radius: 999px;
+}
+
+.visual-mode-tabs {
+  margin-bottom: 12px;
+}
+
+.tab-list button,
+.visual-mode-tabs button {
+  padding: 8px 16px;
+  color: #34518b;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.tab-list button.active,
+.visual-mode-tabs button.active {
+  color: #ffffff;
+  background: #3f7cff;
+  box-shadow: 0 6px 14px rgb(63 124 255 / 25%);
 }
 
 .debug-toolbar {
@@ -430,6 +461,123 @@ button {
   opacity: 1;
 }
 
+.flowchart-panel {
+  min-height: 680px;
+}
+
+.flowchart-canvas {
+  height: 590px;
+  padding: 14px;
+  overflow: auto;
+  background:
+    radial-gradient(circle at 16px 16px, rgb(63 124 255 / 10%) 2px, transparent 2px),
+    #f9fbff;
+  background-size: 28px 28px;
+  border-radius: 16px;
+}
+
+.flow-node-wrap {
+  position: relative;
+}
+
+.flow-node-wrap + .flow-node-wrap::before,
+.flow-sequence > .flow-node-wrap::before,
+.flow-branch > .flow-node-wrap::before {
+  display: block;
+  width: 2px;
+  height: 10px;
+  margin-left: 22px;
+  content: "";
+  background: #9db7ff;
+}
+
+.flow-node {
+  max-width: 860px;
+  padding: 10px 12px;
+  margin: 4px 0;
+  color: #16325c;
+  background: #ffffff;
+  border: 1px solid #cfe0ff;
+  border-left: 6px solid #3f7cff;
+  border-radius: 14px;
+  box-shadow: 0 8px 18px rgb(34 64 130 / 9%);
+}
+
+.flow-node-title {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.flow-node-title span {
+  padding: 2px 7px;
+  margin-left: auto;
+  color: #63708a;
+  background: #edf3ff;
+  border-radius: 999px;
+  font-size: 11px;
+}
+
+.flow-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 6px;
+  margin: 0;
+}
+
+.flow-fields div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px;
+  padding: 6px 8px;
+  background: #f6f8ff;
+  border-radius: 10px;
+}
+
+.flow-fields dt {
+  color: #63708a;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.flow-fields dd {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: #152033;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flow-decision {
+  border-left-color: #ffbf00;
+}
+
+.flow-method {
+  border-left-color: #0fbd8c;
+}
+
+.flow-variable,
+.flow-assignment {
+  border-left-color: #ff8c1a;
+}
+
+.flow-call {
+  border-left-color: #9966ff;
+}
+
+.flow-return {
+  border-left-color: #ff6680;
+}
+
+.flow-branch,
+.flow-sequence {
+  margin-left: 16px;
+  padding-left: 12px;
+  border-left: 1px dashed #b9c9f8;
+}
+
 .roslyn-panel {
   min-height: auto;
   margin-top: 20px;
@@ -592,10 +740,6 @@ button {
 @media (max-width: 920px) {
   .app-shell {
     padding: 18px;
-  }
-
-  .workspace-grid {
-    grid-template-columns: 1fr;
   }
 
   .ide-bottom-grid,

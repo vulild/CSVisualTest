@@ -5,6 +5,7 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import { BlockWorkspace } from './blocks/BlockWorkspace';
+import { FlowchartView } from './blocks/FlowchartView';
 import { RoslynSyntaxTreePanel } from './blocks/RoslynSyntaxTreePanel';
 import type { StatementBlockType, ToolboxItem, VisualBlock } from './blocks/blockModel';
 import { DEFAULT_CSHARP_CODE } from './core/parser/parseCSharp';
@@ -40,6 +41,8 @@ export function App() {
   const [diagnostics, setDiagnostics] = useState<string[]>(initialState.diagnostics);
   const [roslynResult, setRoslynResult] = useState<RoslynParseResponse | null>(null);
   const [roslynStatus, setRoslynStatus] = useState<'idle' | 'loading' | 'ready' | 'unavailable'>('idle');
+  const [workspaceTab, setWorkspaceTab] = useState<'code' | 'visual'>('code');
+  const [visualMode, setVisualMode] = useState<'blocks' | 'flowchart'>('blocks');
   const [breakpoints, setBreakpoints] = useState<number[]>([]);
   const [debugState, setDebugState] = useState<DebugState>('Idle');
   const [debugSessionId, setDebugSessionId] = useState('');
@@ -191,22 +194,75 @@ export function App() {
         onStop={handleStop}
       />
 
-      <div className="workspace-grid">
-        <CodeEditor
-          value={code}
-          onChange={handleCodeChange}
-          breakpoints={breakpoints}
-          currentDebugLine={currentDebugLine}
-          onBreakpointsChange={setBreakpoints}
-        />
-        <BlockWorkspace
-          blocks={blocks}
-          onFieldChange={handleFieldChange}
-          onAddStatement={handleAddStatement}
-          onInsertStatement={handleInsertStatement}
-          onMoveStatement={handleMoveStatement}
-          onDeleteBlock={handleDeleteBlock}
-        />
+      <div className="workspace-tabs" aria-label="代码与可视化工作区">
+        <div className="tab-list" role="tablist" aria-label="代码与可视化区域切换">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={workspaceTab === 'code'}
+            className={workspaceTab === 'code' ? 'active' : ''}
+            onClick={() => setWorkspaceTab('code')}
+          >
+            代码
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={workspaceTab === 'visual'}
+            className={workspaceTab === 'visual' ? 'active' : ''}
+            onClick={() => setWorkspaceTab('visual')}
+          >
+            可视化
+          </button>
+        </div>
+
+        {workspaceTab === 'code' ? (
+          <div role="tabpanel" aria-label="代码区域">
+            <CodeEditor
+              value={code}
+              onChange={handleCodeChange}
+              breakpoints={breakpoints}
+              currentDebugLine={currentDebugLine}
+              onBreakpointsChange={setBreakpoints}
+            />
+          </div>
+        ) : (
+          <div role="tabpanel" aria-label="可视化区域">
+            <div className="visual-mode-tabs" role="tablist" aria-label="可视化方式切换">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={visualMode === 'blocks'}
+                className={visualMode === 'blocks' ? 'active' : ''}
+                onClick={() => setVisualMode('blocks')}
+              >
+                方块
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={visualMode === 'flowchart'}
+                className={visualMode === 'flowchart' ? 'active' : ''}
+                onClick={() => setVisualMode('flowchart')}
+              >
+                流程图
+              </button>
+            </div>
+
+            {visualMode === 'blocks' ? (
+              <BlockWorkspace
+                blocks={blocks}
+                onFieldChange={handleFieldChange}
+                onAddStatement={handleAddStatement}
+                onInsertStatement={handleInsertStatement}
+                onMoveStatement={handleMoveStatement}
+                onDeleteBlock={handleDeleteBlock}
+              />
+            ) : (
+              <FlowchartView blocks={blocks} />
+            )}
+          </div>
+        )}
       </div>
 
       <div className="ide-bottom-grid">
