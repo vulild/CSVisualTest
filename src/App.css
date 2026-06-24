@@ -1,0 +1,266 @@
+/*
+ * 功能名称：C# 方块式 IDE 界面样式
+ * 开发者：Cursor Agent
+ * 开发时间：2026-06-24
+ */
+
+:root {
+  color: #152033;
+  background: #edf3ff;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 32px;
+}
+
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding: 28px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #3f7cff, #7c4dff);
+  border-radius: 28px;
+  box-shadow: 0 18px 40px rgb(48 78 160 / 22%);
+}
+
+.hero h1 {
+  margin: 4px 0 10px;
+  font-size: clamp(30px, 5vw, 54px);
+}
+
+.hero p {
+  max-width: 760px;
+  margin: 0;
+  line-height: 1.65;
+}
+
+.eyebrow {
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
+  gap: 20px;
+}
+
+.panel {
+  min-height: 680px;
+  padding: 20px;
+  background: rgb(255 255 255 / 88%);
+  border: 1px solid rgb(96 124 196 / 18%);
+  border-radius: 24px;
+  box-shadow: 0 14px 32px rgb(34 64 130 / 12%);
+}
+
+.panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.panel h2 {
+  margin: 0 0 6px;
+}
+
+.panel p {
+  margin: 0;
+  color: #63708a;
+}
+
+.code-editor {
+  width: 100%;
+  height: 590px;
+  padding: 18px;
+  color: #e6edf8;
+  background: #10182a;
+  border: 0;
+  border-radius: 18px;
+  outline: 2px solid transparent;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 14px;
+  line-height: 1.65;
+  resize: vertical;
+}
+
+.code-editor:focus {
+  outline-color: #83a9ff;
+}
+
+.block-canvas {
+  height: 590px;
+  padding: 14px;
+  overflow: auto;
+  background:
+    linear-gradient(90deg, rgb(80 119 255 / 8%) 1px, transparent 1px),
+    linear-gradient(rgb(80 119 255 / 8%) 1px, transparent 1px),
+    #f9fbff;
+  background-size: 22px 22px;
+  border-radius: 18px;
+}
+
+.visual-block {
+  position: relative;
+  margin: 10px 0;
+  padding: 14px;
+  color: #ffffff;
+  background: #4d97ff;
+  border-radius: 18px 18px 18px 6px;
+  box-shadow: inset 0 -4px 0 rgb(0 0 0 / 12%), 0 10px 18px rgb(42 86 180 / 14%);
+}
+
+.block-program {
+  color: #152033;
+  background: #ffffff;
+  border: 2px dashed #b5c6f3;
+}
+
+.block-using,
+.block-namespace {
+  background: #855cd6;
+}
+
+.block-class {
+  background: #4c97ff;
+}
+
+.block-method {
+  background: #0fbd8c;
+}
+
+.block-variable,
+.block-assignment {
+  background: #ff8c1a;
+}
+
+.block-call {
+  background: #9966ff;
+}
+
+.block-if {
+  background: #ffbf00;
+  color: #2f2400;
+}
+
+.block-return {
+  background: #ff6680;
+}
+
+.block-comment,
+.block-unknown {
+  background: #667085;
+}
+
+.block-title-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.block-type {
+  padding: 2px 8px;
+  margin-left: auto;
+  font-size: 12px;
+  color: currentColor;
+  background: rgb(255 255 255 / 24%);
+  border-radius: 999px;
+}
+
+.block-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.block-field {
+  display: grid;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.block-field input {
+  width: 100%;
+  padding: 9px 10px;
+  color: #152033;
+  background: #ffffff;
+  border: 0;
+  border-radius: 10px;
+}
+
+.block-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.block-actions button,
+.ghost-button {
+  padding: 7px 10px;
+  color: #16325c;
+  background: #ffffff;
+  border: 0;
+  border-radius: 999px;
+}
+
+.ghost-button.danger {
+  color: #b42318;
+}
+
+.block-children {
+  margin-top: 12px;
+}
+
+.diagnostics {
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  color: #7a2e0e;
+  background: #fff4e5;
+  border: 1px solid #ffd6a8;
+  border-radius: 16px;
+}
+
+.diagnostics ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+@media (max-width: 920px) {
+  .app-shell {
+    padding: 18px;
+  }
+
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+}
