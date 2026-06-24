@@ -16,8 +16,10 @@ export function BlockToolbox() {
 
   return (
     <aside className="block-toolbox" aria-label="常用语法工具箱">
-      <h3>工具箱</h3>
-      <p>拖动语法到方法或 if 方块中新增。</p>
+      <div className="toolbox-heading">
+        <h3>工具箱</h3>
+        <p>拖到方块插入线新增语句。</p>
+      </div>
       <div className="toolbox-list">
         {COMMON_SYNTAX_TOOLS.map((item) => (
           <button
@@ -25,10 +27,11 @@ export function BlockToolbox() {
             type="button"
             className="toolbox-item"
             draggable
+            title={item.description}
+            aria-label={`${item.label}：${item.description}`}
             onDragStart={(event) => handleDragStart(event, item)}
           >
             <strong>{item.label}</strong>
-            <span>{item.description}</span>
           </button>
         ))}
       </div>

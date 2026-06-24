@@ -105,15 +105,21 @@ function BlockCard({
     <article
       className={`visual-block block-${block.type}`}
       draggable={canMove}
-      style={{ marginLeft: `${depth * 14}px` }}
+      style={{ marginLeft: `${depth * 8}px` }}
       onDragStart={handleDragStart}
     >
       <div className="block-title-row">
+        {canMove ? <span className="drag-handle" title="拖动调整顺序">↕</span> : null}
         <strong>{block.label}</strong>
         <span className="block-type">{block.type}</span>
         {canDelete ? (
-          <button type="button" className="ghost-button danger" onClick={() => onDeleteBlock(block.id)}>
-            删除
+          <button
+            type="button"
+            className="ghost-button danger compact-delete"
+            aria-label={`删除${block.label}`}
+            onClick={() => onDeleteBlock(block.id)}
+          >
+            ×
           </button>
         ) : null}
       </div>
@@ -136,18 +142,21 @@ function BlockCard({
       ) : null}
 
       {canContainStatements ? (
-        <div className="block-actions" aria-label={`${block.label} 添加语句`}>
-          {COMMON_SYNTAX_TOOLS.slice(0, 6).map((option) => (
-            <button key={option.id} type="button" onClick={() => onAddStatement(block.id, option.statementType)}>
-              + {option.label}
-            </button>
-          ))}
-        </div>
+        <details className="block-actions" aria-label={`${block.label} 添加语句`}>
+          <summary>+ 添加语句</summary>
+          <div className="block-action-list">
+            {COMMON_SYNTAX_TOOLS.slice(0, 6).map((option) => (
+              <button key={option.id} type="button" onClick={() => onAddStatement(block.id, option.statementType)}>
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </details>
       ) : null}
 
       {canContainStatements ? (
         <DropZone
-          label="拖到此处添加到开头"
+          label="拖放到开头"
           parentId={block.id}
           index={0}
           onInsertStatement={onInsertStatement}
@@ -172,7 +181,7 @@ function BlockCard({
               />
               {canContainStatements ? (
                 <DropZone
-                  label={`拖到此处插入到第 ${childIndex + 2} 位`}
+                  label={`拖放到第 ${childIndex + 2} 位`}
                   parentId={block.id}
                   index={childIndex + 1}
                   onInsertStatement={onInsertStatement}

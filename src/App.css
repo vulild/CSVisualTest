@@ -191,70 +191,75 @@ button {
 
 .visual-programming-layout {
   display: grid;
-  grid-template-columns: 190px minmax(0, 1fr);
-  gap: 14px;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
 }
 
 .block-toolbox {
-  height: 590px;
-  padding: 14px;
-  overflow: auto;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 64px;
+  padding: 10px;
   background: #eef4ff;
   border: 1px solid #c8d7ff;
-  border-radius: 18px;
+  border-radius: 14px;
 }
 
-.block-toolbox h3 {
+.toolbox-heading {
+  min-width: 132px;
+}
+
+.block-toolbox h3,
+.block-toolbox p {
   margin: 0 0 6px;
 }
 
 .block-toolbox p {
-  margin-bottom: 12px;
+  margin: 0;
   font-size: 13px;
 }
 
 .toolbox-list {
-  display: grid;
-  gap: 8px;
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+  padding-bottom: 2px;
 }
 
 .toolbox-item {
-  display: grid;
-  gap: 4px;
-  padding: 10px;
-  text-align: left;
+  flex: 0 0 auto;
+  padding: 7px 10px;
   color: #16325c;
   background: #ffffff;
   border: 1px solid #cfe0ff;
-  border-radius: 14px;
-  box-shadow: 0 8px 16px rgb(34 64 130 / 8%);
-}
-
-.toolbox-item span {
-  color: #63708a;
-  font-size: 12px;
+  border-radius: 999px;
+  box-shadow: 0 4px 10px rgb(34 64 130 / 7%);
+  white-space: nowrap;
 }
 
 .block-canvas {
-  height: 590px;
-  padding: 14px;
+  height: 516px;
+  padding: 10px;
   overflow: auto;
   background:
     linear-gradient(90deg, rgb(80 119 255 / 8%) 1px, transparent 1px),
     linear-gradient(rgb(80 119 255 / 8%) 1px, transparent 1px),
     #f9fbff;
   background-size: 22px 22px;
-  border-radius: 18px;
+  border-radius: 14px;
 }
 
 .visual-block {
   position: relative;
-  margin: 10px 0;
-  padding: 14px;
+  margin: 6px 0;
+  padding: 9px 10px;
   color: #ffffff;
   background: #4d97ff;
-  border-radius: 18px 18px 18px 6px;
-  box-shadow: inset 0 -4px 0 rgb(0 0 0 / 12%), 0 10px 18px rgb(42 86 180 / 14%);
+  border-radius: 14px 14px 14px 5px;
+  box-shadow: inset 0 -2px 0 rgb(0 0 0 / 12%), 0 5px 12px rgb(42 86 180 / 10%);
 }
 
 .block-program {
@@ -301,15 +306,29 @@ button {
 
 .block-title-row {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 7px;
+  min-height: 24px;
+}
+
+.block-title-row strong {
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.drag-handle {
+  width: 18px;
+  color: currentColor;
+  font-weight: 900;
+  text-align: center;
+  opacity: 0.76;
 }
 
 .block-type {
-  padding: 2px 8px;
+  padding: 1px 6px;
   margin-left: auto;
-  font-size: 12px;
+  font-size: 11px;
   color: currentColor;
   background: rgb(255 255 255 / 24%);
   border-radius: 999px;
@@ -317,65 +336,98 @@ button {
 
 .block-fields {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 6px;
 }
 
 .block-field {
   display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 5px;
-  font-size: 13px;
+  align-items: center;
+  font-size: 12px;
   font-weight: 700;
 }
 
 .block-field input {
   width: 100%;
-  padding: 9px 10px;
+  min-width: 0;
+  padding: 5px 7px;
   color: #152033;
   background: #ffffff;
   border: 0;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .block-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
+  margin-top: 7px;
 }
 
-.block-actions button,
+.block-actions summary {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  color: #16325c;
+  background: #ffffff;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.block-action-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.block-action-list button,
 .ghost-button {
-  padding: 7px 10px;
+  padding: 5px 8px;
   color: #16325c;
   background: #ffffff;
   border: 0;
   border-radius: 999px;
+  font-size: 12px;
 }
 
 .ghost-button.danger {
   color: #b42318;
 }
 
+.compact-delete {
+  display: inline-grid;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  margin-left: 2px;
+  place-items: center;
+  font-size: 16px;
+  font-weight: 900;
+}
+
 .block-children {
-  margin-top: 12px;
+  margin-top: 6px;
 }
 
 .drop-zone {
-  margin: 8px 0 2px;
-  padding: 8px 10px;
+  margin: 4px 0 1px;
+  padding: 3px 8px;
   color: #34518b;
-  background: rgb(255 255 255 / 62%);
+  background: rgb(255 255 255 / 48%);
   border: 1px dashed rgb(52 81 139 / 44%);
-  border-radius: 12px;
-  font-size: 12px;
+  border-radius: 999px;
+  font-size: 11px;
   text-align: center;
+  opacity: 0.72;
 }
 
 .drop-zone:focus,
 .drop-zone:hover {
   background: #ffffff;
   outline: 2px solid #83a9ff;
+  opacity: 1;
 }
 
 .roslyn-panel {
@@ -558,7 +610,7 @@ button {
   }
 
   .block-toolbox {
+    grid-template-columns: 1fr;
     height: auto;
-    max-height: 260px;
   }
 }
