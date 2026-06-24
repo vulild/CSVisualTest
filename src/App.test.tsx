@@ -74,6 +74,6 @@ namespace DemoApp
 
     expect(screen.getByLabelText('流程图可视化')).toBeInTheDocument();
     expect(screen.getByText('C# 程序')).toBeInTheDocument();
-    expect(screen.getAllByText('方法').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('SayHello').length).toBeGreaterThan(0);
   });
 });
