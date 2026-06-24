@@ -9,7 +9,15 @@ import { blocksToAst } from '../blocks/blocksToAst';
 import type { VisualBlock } from '../blocks/blockModel';
 import { DEFAULT_CSHARP_CODE, parseCSharp } from '../core/parser/parseCSharp';
 import { astToCSharp } from '../core/serializer/astToCSharp';
-import { addStatementBlock, deleteBlock, syncFromBlocks, syncFromCode, updateBlockField } from './SyncEngine';
+import {
+  addStatementBlock,
+  deleteBlock,
+  insertStatementBlock,
+  moveStatementBlock,
+  syncFromBlocks,
+  syncFromCode,
+  updateBlockField,
+} from './SyncEngine';
 
 describe('SyncEngine', () => {
   it('支持代码到方块再回到代码的往返同步', () => {
@@ -43,6 +51,28 @@ describe('SyncEngine', () => {
     const withoutStatement = deleteBlock(withStatement, commentBlock?.id ?? '');
 
     expect(syncFromBlocks(withoutStatement).code).not.toContain('// 新增说明');
+  });
+
+  it('支持从工具箱按指定位置插入 Roslyn 原始语法模板', () => {
+    const fromCode = syncFromCode(DEFAULT_CSHARP_CODE);
+    const withLoop = insertStatementBlock(fromCode.blocks, 'method-sayhello-0', 1, {
+      statementType: 'unknown',
+      fields: { text: 'for (int i = 0; i < 3; i++)\n{\n    Console.WriteLine(i);\n}' },
+    });
+    const generatedCode = syncFromBlocks(withLoop).code;
+
+    expect(generatedCode).toContain('for (int i = 0; i < 3; i++)');
+    expect(generatedCode.indexOf('for (int i = 0; i < 3; i++)')).toBeLessThan(
+      generatedCode.indexOf('Console.WriteLine(message);'),
+    );
+  });
+
+  it('支持拖动语句调整同一容器内的顺序', () => {
+    const fromCode = syncFromCode(DEFAULT_CSHARP_CODE);
+    const reorderedBlocks = moveStatementBlock(fromCode.blocks, 'method-sayhello-0', 3, 0);
+    const generatedCode = syncFromBlocks(reorderedBlocks).code;
+
+    expect(generatedCode.indexOf('return message;')).toBeLessThan(generatedCode.indexOf('string message'));
   });
 
   it('方块转换保留统一 AST 的核心结构', () => {

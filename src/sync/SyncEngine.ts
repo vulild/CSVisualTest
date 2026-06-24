@@ -5,7 +5,7 @@
  */
 import { astToBlocks } from '../blocks/astToBlocks';
 import { blocksToAst } from '../blocks/blocksToAst';
-import type { StatementBlockType, VisualBlock } from '../blocks/blockModel';
+import type { StatementBlockType, ToolboxItem, VisualBlock } from '../blocks/blockModel';
 import { parseCSharp } from '../core/parser/parseCSharp';
 import { astToCSharp } from '../core/serializer/astToCSharp';
 
@@ -62,17 +62,58 @@ export function addStatementBlock(
   parentId: string,
   statementType: StatementBlockType,
 ): VisualBlock[] {
+  return insertStatementBlock(blocks, parentId, Number.POSITIVE_INFINITY, { statementType });
+}
+
+export function insertStatementBlock(
+  blocks: VisualBlock[],
+  parentId: string,
+  index: number,
+  item: Pick<ToolboxItem, 'statementType' | 'fields'>,
+): VisualBlock[] {
   return blocks.map((block) => {
     if (block.id === parentId) {
+      const nextChildren = [...block.children];
+      const insertIndex = Number.isFinite(index) ? Math.max(0, Math.min(index, nextChildren.length)) : nextChildren.length;
+      nextChildren.splice(insertIndex, 0, createStatementBlock(item.statementType, item.fields));
+
       return {
         ...block,
-        children: [...block.children, createStatementBlock(statementType)],
+        children: nextChildren,
       };
     }
 
     return {
       ...block,
-      children: addStatementBlock(block.children, parentId, statementType),
+      children: insertStatementBlock(block.children, parentId, index, item),
+    };
+  });
+}
+
+export function moveStatementBlock(
+  blocks: VisualBlock[],
+  parentId: string,
+  fromIndex: number,
+  toIndex: number,
+): VisualBlock[] {
+  return blocks.map((block) => {
+    if (block.id === parentId) {
+      const nextChildren = [...block.children];
+      const [moved] = nextChildren.splice(fromIndex, 1);
+      if (!moved) {
+        return block;
+      }
+
+      nextChildren.splice(Math.max(0, Math.min(toIndex, nextChildren.length)), 0, moved);
+      return {
+        ...block,
+        children: nextChildren,
+      };
+    }
+
+    return {
+      ...block,
+      children: moveStatementBlock(block.children, parentId, fromIndex, toIndex),
     };
   });
 }
@@ -86,21 +127,35 @@ export function deleteBlock(blocks: VisualBlock[], blockId: string): VisualBlock
     }));
 }
 
-function createStatementBlock(statementType: StatementBlockType): VisualBlock {
+function createStatementBlock(statementType: StatementBlockType, fields: Record<string, string> = {}): VisualBlock {
   const id = `${statementType}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   switch (statementType) {
     case 'comment':
-      return { id, type: 'comment', label: '注释', fields: { text: '新增说明' }, children: [] };
+      return { id, type: 'comment', label: '注释', fields: { text: '新增说明', ...fields }, children: [] };
     case 'variable':
-      return { id, type: 'variable', label: '变量', fields: { type: 'var', name: 'value', initializer: '0' }, children: [] };
+      return {
+        id,
+        type: 'variable',
+        label: '变量',
+        fields: { type: 'var', name: 'value', initializer: '0', ...fields },
+        children: [],
+      };
     case 'assignment':
-      return { id, type: 'assignment', label: '赋值', fields: { target: 'value', expression: '1' }, children: [] };
+      return { id, type: 'assignment', label: '赋值', fields: { target: 'value', expression: '1', ...fields }, children: [] };
     case 'call':
-      return { id, type: 'call', label: '调用', fields: { callee: 'Console.WriteLine', arguments: 'value' }, children: [] };
+      return {
+        id,
+        type: 'call',
+        label: '调用',
+        fields: { callee: 'Console.WriteLine', arguments: 'value', ...fields },
+        children: [],
+      };
     case 'if':
-      return { id, type: 'if', label: '如果', fields: { condition: 'value > 0' }, children: [] };
+      return { id, type: 'if', label: '如果', fields: { condition: 'value > 0', ...fields }, children: [] };
     case 'return':
-      return { id, type: 'return', label: '返回', fields: { expression: 'value' }, children: [] };
+      return { id, type: 'return', label: '返回', fields: { expression: 'value', ...fields }, children: [] };
+    case 'unknown':
+      return { id, type: 'unknown', label: 'Roslyn 原始语法', fields: { text: '// 在这里输入任意 C# 语法', ...fields }, children: [] };
   }
 }

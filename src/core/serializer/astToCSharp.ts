@@ -109,10 +109,21 @@ function serializeStatement(statement: CSharpStatement, indentLevel: number): st
     case 'return':
       return [statement.expression ? `${indent}return ${statement.expression};` : `${indent}return;`];
     case 'unknown':
-      return [`${indent}${statement.text};`];
+      return serializeRawStatement(statement.text, indent);
   }
 }
 
 function toIndent(level: number): string {
   return '    '.repeat(level);
+}
+
+function serializeRawStatement(text: string, indent: string): string[] {
+  const lines = text.split('\n').map((line) => `${indent}${line}`);
+  const trimmed = text.trim();
+
+  if (trimmed.endsWith(';') || trimmed.endsWith('}')) {
+    return lines;
+  }
+
+  return [`${indent}${text};`];
 }

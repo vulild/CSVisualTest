@@ -115,6 +115,52 @@ button {
   outline-color: #83a9ff;
 }
 
+.visual-programming-layout {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 14px;
+}
+
+.block-toolbox {
+  height: 590px;
+  padding: 14px;
+  overflow: auto;
+  background: #eef4ff;
+  border: 1px solid #c8d7ff;
+  border-radius: 18px;
+}
+
+.block-toolbox h3 {
+  margin: 0 0 6px;
+}
+
+.block-toolbox p {
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.toolbox-list {
+  display: grid;
+  gap: 8px;
+}
+
+.toolbox-item {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  text-align: left;
+  color: #16325c;
+  background: #ffffff;
+  border: 1px solid #cfe0ff;
+  border-radius: 14px;
+  box-shadow: 0 8px 16px rgb(34 64 130 / 8%);
+}
+
+.toolbox-item span {
+  color: #63708a;
+  font-size: 12px;
+}
+
 .block-canvas {
   height: 590px;
   padding: 14px;
@@ -241,6 +287,105 @@ button {
   margin-top: 12px;
 }
 
+.drop-zone {
+  margin: 8px 0 2px;
+  padding: 8px 10px;
+  color: #34518b;
+  background: rgb(255 255 255 / 62%);
+  border: 1px dashed rgb(52 81 139 / 44%);
+  border-radius: 12px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.drop-zone:focus,
+.drop-zone:hover {
+  background: #ffffff;
+  outline: 2px solid #83a9ff;
+}
+
+.roslyn-panel {
+  min-height: auto;
+  margin-top: 20px;
+}
+
+.status-pill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.status-idle,
+.status-loading {
+  color: #6b3d00;
+  background: #fff1c7;
+}
+
+.status-ready {
+  color: #075e45;
+  background: #d7f8ec;
+}
+
+.status-unavailable {
+  color: #8a1f11;
+  background: #ffe0da;
+}
+
+.roslyn-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.roslyn-summary span,
+.roslyn-empty {
+  padding: 8px 10px;
+  color: #34518b;
+  background: #eef4ff;
+  border-radius: 12px;
+}
+
+.roslyn-diagnostics {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  color: #8a1f11;
+}
+
+.roslyn-tree {
+  max-height: 340px;
+  overflow: auto;
+  padding: 12px;
+  background: #10182a;
+  border-radius: 16px;
+}
+
+.syntax-node,
+.syntax-token {
+  margin: 4px 0 4px 14px;
+  color: #e6edf8;
+}
+
+.syntax-node summary,
+.syntax-token summary {
+  cursor: pointer;
+}
+
+.syntax-node small,
+.syntax-token small {
+  margin-left: 8px;
+  color: #9fb1d1;
+}
+
+.syntax-token {
+  color: #9ee493;
+}
+
+.syntax-children {
+  border-left: 1px solid rgb(255 255 255 / 14%);
+}
+
 .diagnostics {
   margin-bottom: 20px;
   padding: 14px 18px;
@@ -262,5 +407,14 @@ button {
 
   .workspace-grid {
     grid-template-columns: 1fr;
+  }
+
+  .visual-programming-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .block-toolbox {
+    height: auto;
+    max-height: 260px;
   }
 }

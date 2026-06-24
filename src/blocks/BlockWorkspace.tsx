@@ -3,13 +3,18 @@
  * 开发者：Cursor Agent
  * 开发时间：2026-06-24
  */
-import type { ChangeEvent } from 'react';
-import type { StatementBlockType, VisualBlock } from './blockModel';
+import type { ChangeEvent, DragEvent } from 'react';
+import { BlockToolbox, TOOLBOX_DRAG_MIME } from './BlockToolbox';
+import { COMMON_SYNTAX_TOOLS, type StatementBlockType, type ToolboxItem, type VisualBlock } from './blockModel';
+
+const BLOCK_MOVE_MIME = 'application/csvisual-block-move';
 
 interface BlockWorkspaceProps {
   blocks: VisualBlock[];
   onFieldChange: (blockId: string, fieldName: string, value: string) => void;
   onAddStatement: (parentId: string, statementType: StatementBlockType) => void;
+  onInsertStatement: (parentId: string, index: number, item: Pick<ToolboxItem, 'statementType' | 'fields'>) => void;
+  onMoveStatement: (parentId: string, fromIndex: number, toIndex: number) => void;
   onDeleteBlock: (blockId: string) => void;
 }
 
@@ -28,19 +33,12 @@ const FIELD_LABELS: Record<string, string> = {
   condition: '条件',
 };
 
-const STATEMENT_OPTIONS: Array<{ type: StatementBlockType; label: string }> = [
-  { type: 'variable', label: '变量' },
-  { type: 'assignment', label: '赋值' },
-  { type: 'call', label: '调用' },
-  { type: 'if', label: '如果' },
-  { type: 'return', label: '返回' },
-  { type: 'comment', label: '注释' },
-];
-
 export function BlockWorkspace({
   blocks,
   onFieldChange,
   onAddStatement,
+  onInsertStatement,
+  onMoveStatement,
   onDeleteBlock,
 }: BlockWorkspaceProps) {
   return (
@@ -51,17 +49,22 @@ export function BlockWorkspace({
           <p>编辑方块字段后，左侧 C# 代码会实时更新。</p>
         </div>
       </div>
-      <div className="block-canvas">
-        {blocks.map((block) => (
-          <BlockCard
-            key={block.id}
-            block={block}
-            depth={0}
-            onFieldChange={onFieldChange}
-            onAddStatement={onAddStatement}
-            onDeleteBlock={onDeleteBlock}
-          />
-        ))}
+      <div className="visual-programming-layout">
+        <BlockToolbox />
+        <div className="block-canvas">
+          {blocks.map((block) => (
+            <BlockCard
+              key={block.id}
+              block={block}
+              depth={0}
+              onFieldChange={onFieldChange}
+              onAddStatement={onAddStatement}
+              onInsertStatement={onInsertStatement}
+              onMoveStatement={onMoveStatement}
+              onDeleteBlock={onDeleteBlock}
+            />
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -70,14 +73,41 @@ export function BlockWorkspace({
 interface BlockCardProps extends Omit<BlockWorkspaceProps, 'blocks'> {
   block: VisualBlock;
   depth: number;
+  parentId?: string;
+  index?: number;
 }
 
-function BlockCard({ block, depth, onFieldChange, onAddStatement, onDeleteBlock }: BlockCardProps) {
+function BlockCard({
+  block,
+  depth,
+  parentId,
+  index,
+  onFieldChange,
+  onAddStatement,
+  onInsertStatement,
+  onMoveStatement,
+  onDeleteBlock,
+}: BlockCardProps) {
   const canContainStatements = block.type === 'method' || block.type === 'if';
   const canDelete = ['comment', 'variable', 'assignment', 'call', 'if', 'return', 'unknown'].includes(block.type);
+  const canMove = canDelete && parentId !== undefined && index !== undefined;
+
+  const handleDragStart = (event: DragEvent<HTMLElement>) => {
+    if (!canMove) {
+      return;
+    }
+
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData(BLOCK_MOVE_MIME, JSON.stringify({ parentId, index }));
+  };
 
   return (
-    <article className={`visual-block block-${block.type}`} style={{ marginLeft: `${depth * 14}px` }}>
+    <article
+      className={`visual-block block-${block.type}`}
+      draggable={canMove}
+      style={{ marginLeft: `${depth * 14}px` }}
+      onDragStart={handleDragStart}
+    >
       <div className="block-title-row">
         <strong>{block.label}</strong>
         <span className="block-type">{block.type}</span>
@@ -107,28 +137,99 @@ function BlockCard({ block, depth, onFieldChange, onAddStatement, onDeleteBlock 
 
       {canContainStatements ? (
         <div className="block-actions" aria-label={`${block.label} 添加语句`}>
-          {STATEMENT_OPTIONS.map((option) => (
-            <button key={option.type} type="button" onClick={() => onAddStatement(block.id, option.type)}>
+          {COMMON_SYNTAX_TOOLS.slice(0, 6).map((option) => (
+            <button key={option.id} type="button" onClick={() => onAddStatement(block.id, option.statementType)}>
               + {option.label}
             </button>
           ))}
         </div>
       ) : null}
 
+      {canContainStatements ? (
+        <DropZone
+          label="拖到此处添加到开头"
+          parentId={block.id}
+          index={0}
+          onInsertStatement={onInsertStatement}
+          onMoveStatement={onMoveStatement}
+        />
+      ) : null}
+
       {block.children.length > 0 ? (
         <div className="block-children">
-          {block.children.map((child) => (
-            <BlockCard
-              key={child.id}
-              block={child}
-              depth={depth + 1}
-              onFieldChange={onFieldChange}
-              onAddStatement={onAddStatement}
-              onDeleteBlock={onDeleteBlock}
-            />
+          {block.children.map((child, childIndex) => (
+            <div key={child.id}>
+              <BlockCard
+                block={child}
+                depth={depth + 1}
+                parentId={canContainStatements ? block.id : undefined}
+                index={canContainStatements ? childIndex : undefined}
+                onFieldChange={onFieldChange}
+                onAddStatement={onAddStatement}
+                onInsertStatement={onInsertStatement}
+                onMoveStatement={onMoveStatement}
+                onDeleteBlock={onDeleteBlock}
+              />
+              {canContainStatements ? (
+                <DropZone
+                  label={`拖到此处插入到第 ${childIndex + 2} 位`}
+                  parentId={block.id}
+                  index={childIndex + 1}
+                  onInsertStatement={onInsertStatement}
+                  onMoveStatement={onMoveStatement}
+                />
+              ) : null}
+            </div>
           ))}
         </div>
       ) : null}
     </article>
+  );
+}
+
+interface DropZoneProps {
+  label: string;
+  parentId: string;
+  index: number;
+  onInsertStatement: (parentId: string, index: number, item: Pick<ToolboxItem, 'statementType' | 'fields'>) => void;
+  onMoveStatement: (parentId: string, fromIndex: number, toIndex: number) => void;
+}
+
+function DropZone({ label, parentId, index, onInsertStatement, onMoveStatement }: DropZoneProps) {
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const toolboxData = event.dataTransfer.getData(TOOLBOX_DRAG_MIME);
+    const moveData = event.dataTransfer.getData(BLOCK_MOVE_MIME);
+
+    if (toolboxData) {
+      onInsertStatement(parentId, index, JSON.parse(toolboxData) as ToolboxItem);
+      return;
+    }
+
+    if (moveData) {
+      const payload = JSON.parse(moveData) as { parentId: string; index: number };
+      if (payload.parentId === parentId) {
+        const targetIndex = payload.index < index ? index - 1 : index;
+        onMoveStatement(parentId, payload.index, targetIndex);
+      }
+    }
+  };
+
+  return (
+    <div
+      className="drop-zone"
+      role="button"
+      tabIndex={0}
+      aria-label={label}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {label}
+    </div>
   );
 }

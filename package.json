@@ -6,8 +6,13 @@
   "private": true,
   "scripts": {
     "dev": "vite",
+    "dev:api": "dotnet run --project server/CsVisualTest.Roslyn/CsVisualTest.Roslyn.csproj --urls http://localhost:5087",
     "build": "tsc --noEmit && vite build",
+    "build:api": "dotnet build CSVisualTest.sln --no-restore",
+    "build:all": "npm run build && npm run build:api",
     "test": "vitest run",
+    "test:api": "dotnet test CSVisualTest.sln --no-build",
+    "test:all": "npm run test && npm run test:api",
     "test:watch": "vitest",
     "preview": "vite preview --host 0.0.0.0"
   },

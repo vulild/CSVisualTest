@@ -9,6 +9,15 @@ import { describe, expect, it } from 'vitest';
 import { App } from './App';
 
 describe('App', () => {
+  it('展示常用语法工具箱和 Roslyn 全语法树面板', () => {
+    render(<App />);
+
+    expect(screen.getByLabelText('常用语法工具箱')).toBeInTheDocument();
+    expect(screen.getByText('Roslyn 全语法树')).toBeInTheDocument();
+    expect(screen.getByText('for 循环')).toBeInTheDocument();
+    expect(screen.getByText('try/catch')).toBeInTheDocument();
+  });
+
   it('修改方块字段后实时同步代码编辑器', async () => {
     const user = userEvent.setup();
     render(<App />);
