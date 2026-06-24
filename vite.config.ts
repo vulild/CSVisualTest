@@ -3,7 +3,7 @@
  * 开发者：Cursor Agent
  * 开发时间：2026-06-24
  */
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({

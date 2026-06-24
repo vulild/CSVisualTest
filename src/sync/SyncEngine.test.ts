@@ -6,6 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { astToBlocks } from '../blocks/astToBlocks';
 import { blocksToAst } from '../blocks/blocksToAst';
+import type { VisualBlock } from '../blocks/blockModel';
 import { DEFAULT_CSHARP_CODE, parseCSharp } from '../core/parser/parseCSharp';
 import { astToCSharp } from '../core/serializer/astToCSharp';
 import { addStatementBlock, deleteBlock, syncFromBlocks, syncFromCode, updateBlockField } from './SyncEngine';
@@ -36,10 +37,7 @@ describe('SyncEngine', () => {
 
     expect(addedCode).toContain('// 新增说明');
 
-    const commentBlock = withStatement[0].children
-      .flatMap((child) => child.children)
-      .flatMap((child) => child.children)
-      .find((block) => block.type === 'comment' && block.fields.text === '新增说明');
+    const commentBlock = findBlock(withStatement, (block) => block.type === 'comment' && block.fields.text === '新增说明');
 
     expect(commentBlock).toBeDefined();
     const withoutStatement = deleteBlock(withStatement, commentBlock?.id ?? '');
@@ -57,3 +55,18 @@ describe('SyncEngine', () => {
     expect(nextCode).toContain('namespace DemoApp');
   });
 });
+
+function findBlock(blocks: VisualBlock[], predicate: (block: VisualBlock) => boolean): VisualBlock | undefined {
+  for (const block of blocks) {
+    if (predicate(block)) {
+      return block;
+    }
+
+    const childMatch = findBlock(block.children, predicate);
+    if (childMatch) {
+      return childMatch;
+    }
+  }
+
+  return undefined;
+}
