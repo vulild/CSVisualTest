@@ -11,6 +11,7 @@ import type {
   CSharpProgram,
   CSharpStatement,
 } from '../ast/CSharpAst';
+import { splitTopLevelComma } from './splitTopLevel';
 
 const METHOD_MODIFIERS = new Set([
   'public',
@@ -152,8 +153,7 @@ function parseMethods(
 }
 
 function parseParameters(parameterSource: string): CSharpParameter[] {
-  return parameterSource
-    .split(',')
+  return splitTopLevelComma(parameterSource)
     .map((parameter) => parameter.trim())
     .filter(Boolean)
     .map((parameter) => {
@@ -234,12 +234,26 @@ function parseIfStatement(
   diagnostics: CSharpDiagnostic[],
   bodyStartLine: number,
 ): { statement: CSharpStatement & { kind: 'if' }; nextCursor: number } | null {
-  const conditionMatch = body.slice(cursor).match(/^if\s*\(([^)]*)\)\s*\{/);
-  if (!conditionMatch) {
+  const ifMatch = body.slice(cursor).match(/^if\s*\(/);
+  if (!ifMatch) {
     return null;
   }
 
-  const openBraceIndex = cursor + conditionMatch[0].lastIndexOf('{');
+  const conditionOpenIndex = body.indexOf('(', cursor);
+  const conditionCloseIndex = findMatchingParen(body, conditionOpenIndex);
+  if (conditionCloseIndex === -1) {
+    diagnostics.push({
+      message: 'if 条件缺少结束括号。',
+      line: bodyStartLine + lineNumberAt(body, cursor) - 1,
+    });
+    return null;
+  }
+
+  const openBraceIndex = skipWhitespace(body, conditionCloseIndex + 1);
+  if (body[openBraceIndex] !== '{') {
+    return null;
+  }
+
   const closeBraceIndex = findMatchingBrace(body, openBraceIndex);
   if (closeBraceIndex === -1) {
     diagnostics.push({
@@ -272,7 +286,7 @@ function parseIfStatement(
     statement: {
       id: '',
       kind: 'if',
-      condition: conditionMatch[1].trim(),
+      condition: body.slice(conditionOpenIndex + 1, conditionCloseIndex).trim(),
       thenStatements: parseStatements(
         body.slice(openBraceIndex + 1, closeBraceIndex),
         diagnostics,
@@ -282,6 +296,41 @@ function parseIfStatement(
     },
     nextCursor,
   };
+}
+
+function findMatchingParen(source: string, openParenIndex: number): number {
+  let depth = 0;
+  let quote: '"' | "'" | null = null;
+
+  for (let index = openParenIndex; index < source.length; index += 1) {
+    const char = source[index];
+    const previous = source[index - 1];
+
+    if (quote) {
+      if (char === quote && previous !== '\\') {
+        quote = null;
+      }
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+      continue;
+    }
+
+    if (char === '(') {
+      depth += 1;
+    }
+
+    if (char === ')') {
+      depth -= 1;
+      if (depth === 0) {
+        return index;
+      }
+    }
+  }
+
+  return -1;
 }
 
 function parseSimpleStatement(text: string, index: number): CSharpStatement {
@@ -329,10 +378,7 @@ function parseSimpleStatement(text: string, index: number): CSharpStatement {
 }
 
 function splitArguments(source: string): string[] {
-  return source
-    .split(',')
-    .map((argument) => argument.trim())
-    .filter(Boolean);
+  return splitTopLevelComma(source);
 }
 
 function toUnknownStatement(text: string, index: number): CSharpStatement {

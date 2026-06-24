@@ -89,7 +89,8 @@ function BlockCard({
   onDeleteBlock,
 }: BlockCardProps) {
   const canContainStatements = block.type === 'method' || block.type === 'if';
-  const canDelete = ['comment', 'variable', 'assignment', 'call', 'if', 'return', 'unknown'].includes(block.type);
+  const canDelete =
+    parentId !== undefined && ['comment', 'variable', 'assignment', 'call', 'if', 'return', 'unknown'].includes(block.type);
   const canMove = canDelete && parentId !== undefined && index !== undefined;
 
   const handleDragStart = (event: DragEvent<HTMLElement>) => {

@@ -101,7 +101,7 @@ function statementToBlock(statement: CSharpStatement): VisualBlock {
         type: 'call',
         label: '调用',
         fields: { callee: statement.callee, arguments: statement.arguments.join(', ') },
-        children: [],
+        children: statement.arguments.flatMap((argument, index) => expressionToNestedCallBlocks(argument, `${statement.id}-arg-${index}`)),
       };
     case 'if':
       return {
@@ -128,4 +128,160 @@ function statementToBlock(statement: CSharpStatement): VisualBlock {
         children: [],
       };
   }
+}
+
+function expressionToNestedCallBlocks(expression: string, idPrefix: string): VisualBlock[] {
+  const parsed = parseCallExpression(expression);
+  if (!parsed) {
+    return [];
+  }
+
+  return [
+    {
+      id: `${idPrefix}-${sanitizeIdPart(parsed.callee)}`,
+      type: 'call',
+      label: '嵌套调用',
+      fields: { callee: parsed.callee, arguments: parsed.arguments.join(', ') },
+      children: parsed.arguments.flatMap((argument, index) =>
+        expressionToNestedCallBlocks(argument, `${idPrefix}-${sanitizeIdPart(parsed.callee)}-${index}`),
+      ),
+    },
+  ];
+}
+
+function parseCallExpression(expression: string): { callee: string; arguments: string[] } | null {
+  const trimmed = expression.trim();
+  const openParenIndex = findFirstCallOpenParen(trimmed);
+  if (openParenIndex === -1) {
+    return null;
+  }
+
+  const closeParenIndex = findMatchingParen(trimmed, openParenIndex);
+  if (closeParenIndex === -1) {
+    return null;
+  }
+
+  const callee = readCallee(trimmed, openParenIndex);
+  if (!callee) {
+    return null;
+  }
+
+  return {
+    callee,
+    arguments: splitCallArguments(trimmed.slice(openParenIndex + 1, closeParenIndex)),
+  };
+}
+
+function findFirstCallOpenParen(expression: string): number {
+  let quote: '"' | "'" | null = null;
+
+  for (let index = 0; index < expression.length; index += 1) {
+    const char = expression[index];
+    const previous = expression[index - 1];
+
+    if (quote) {
+      if (char === quote && previous !== '\\') {
+        quote = null;
+      }
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+      continue;
+    }
+
+    if (char === '(' && /[\w)]/.test(expression[index - 1] ?? '')) {
+      return index;
+    }
+  }
+
+  return -1;
+}
+
+function findMatchingParen(expression: string, openParenIndex: number): number {
+  let depth = 0;
+  let quote: '"' | "'" | null = null;
+
+  for (let index = openParenIndex; index < expression.length; index += 1) {
+    const char = expression[index];
+    const previous = expression[index - 1];
+
+    if (quote) {
+      if (char === quote && previous !== '\\') {
+        quote = null;
+      }
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+      continue;
+    }
+
+    if (char === '(') {
+      depth += 1;
+    }
+
+    if (char === ')') {
+      depth -= 1;
+      if (depth === 0) {
+        return index;
+      }
+    }
+  }
+
+  return -1;
+}
+
+function readCallee(expression: string, openParenIndex: number): string {
+  const beforeParen = expression.slice(0, openParenIndex).trimEnd();
+  const match = beforeParen.match(/([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)$/);
+  return match?.[1] ?? '';
+}
+
+function splitCallArguments(source: string): string[] {
+  const argumentsList: string[] = [];
+  let depth = 0;
+  let quote: '"' | "'" | null = null;
+  let start = 0;
+
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index];
+    const previous = source[index - 1];
+
+    if (quote) {
+      if (char === quote && previous !== '\\') {
+        quote = null;
+      }
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+      continue;
+    }
+
+    if (char === '(' || char === '[' || char === '{') {
+      depth += 1;
+      continue;
+    }
+
+    if (char === ')' || char === ']' || char === '}') {
+      depth = Math.max(0, depth - 1);
+      continue;
+    }
+
+    if (char === ',' && depth === 0) {
+      argumentsList.push(source.slice(start, index).trim());
+      start = index + 1;
+    }
+  }
+
+  argumentsList.push(source.slice(start).trim());
+  return argumentsList.filter(Boolean);
+}
+
+function sanitizeIdPart(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'call';
 }

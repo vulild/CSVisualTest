@@ -84,6 +84,33 @@ describe('SyncEngine', () => {
     expect(nextProgram.classes[0].methods[0].statements).toHaveLength(4);
     expect(nextCode).toContain('namespace DemoApp');
   });
+
+  it('函数参数中的嵌套调用会显示为子方块并保持代码回写', () => {
+    const code = `
+using System;
+
+namespace DemoApp
+{
+    public class Demo
+    {
+        public void Run()
+        {
+            Console.WriteLine(FormatName(GetFirst("A, B"), GetLast()), Build(1, Add(2, 3)));
+        }
+    }
+}
+`;
+    const fromCode = syncFromCode(code);
+    const outerCall = findBlock(fromCode.blocks, (block) => block.type === 'call' && block.fields.callee === 'Console.WriteLine');
+    const nestedFormat = findBlock(fromCode.blocks, (block) => block.label === '嵌套调用' && block.fields.callee === 'FormatName');
+    const nestedGetFirst = findBlock(fromCode.blocks, (block) => block.label === '嵌套调用' && block.fields.callee === 'GetFirst');
+    const fromBlocks = syncFromBlocks(fromCode.blocks);
+
+    expect(outerCall?.fields.arguments).toBe('FormatName(GetFirst("A, B"), GetLast()), Build(1, Add(2, 3))');
+    expect(nestedFormat).toBeDefined();
+    expect(nestedGetFirst).toBeDefined();
+    expect(fromBlocks.code).toContain('Console.WriteLine(FormatName(GetFirst("A, B"), GetLast()), Build(1, Add(2, 3)));');
+  });
 });
 
 function findBlock(blocks: VisualBlock[], predicate: (block: VisualBlock) => boolean): VisualBlock | undefined {

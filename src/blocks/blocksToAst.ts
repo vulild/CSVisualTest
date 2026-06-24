@@ -10,6 +10,7 @@ import type {
   CSharpProgram,
   CSharpStatement,
 } from '../core/ast/CSharpAst';
+import { splitTopLevelComma } from '../core/parser/splitTopLevel';
 import type { VisualBlock } from './blockModel';
 
 export function blocksToAst(blocks: VisualBlock[]): CSharpProgram {
@@ -46,7 +47,7 @@ function blockToMethod(block: VisualBlock): CSharpMethodDeclaration {
     returnType: block.fields.returnType.trim() || 'void',
     modifiers: (block.fields.modifiers || 'public').split(/\s+/).filter(Boolean),
     parameters: parseParameterText(block.fields.parameters),
-    statements: block.children.map(blockToStatement),
+    statements: block.children.filter(isStatementBlock).map(blockToStatement),
   };
 }
 
@@ -85,7 +86,7 @@ function blockToStatement(block: VisualBlock): CSharpStatement {
         id: block.id,
         kind: 'if',
         condition: block.fields.condition?.trim() || 'true',
-        thenStatements: block.children.map(blockToStatement),
+        thenStatements: block.children.filter(isStatementBlock).map(blockToStatement),
         elseStatements: [],
       };
     case 'return':
@@ -116,8 +117,9 @@ function parseParameterText(source = ''): CSharpParameter[] {
 }
 
 function splitCsv(source = ''): string[] {
-  return source
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
+  return splitTopLevelComma(source);
+}
+
+function isStatementBlock(block: VisualBlock): boolean {
+  return ['comment', 'variable', 'assignment', 'call', 'if', 'return', 'unknown'].includes(block.type);
 }
