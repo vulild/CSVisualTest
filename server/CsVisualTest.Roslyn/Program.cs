@@ -12,6 +12,7 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
 builder.Services.AddSingleton<RoslynParser>();
+builder.Services.AddSingleton<CSharpLanguageService>();
 
 var app = builder.Build();
 
@@ -22,6 +23,19 @@ app.MapPost("/api/parse", (RoslynParseRequest request, RoslynParser parser) =>
 {
     var response = parser.Parse(request.Source);
     return Results.Ok(response);
+});
+app.MapPost("/api/lsp/diagnostics", (CSharpDocumentRequest request, CSharpLanguageService languageService) =>
+{
+    return Results.Ok(languageService.GetDiagnostics(request.Source));
+});
+app.MapPost("/api/lsp/completions", async (CSharpPositionRequest request, CSharpLanguageService languageService) =>
+{
+    return Results.Ok(await languageService.GetCompletionsAsync(request.Source, request.Position));
+});
+app.MapPost("/api/lsp/hover", async (CSharpPositionRequest request, CSharpLanguageService languageService) =>
+{
+    var response = await languageService.GetHoverAsync(request.Source, request.Position);
+    return response is null ? Results.NoContent() : Results.Ok(response);
 });
 
 app.Run();

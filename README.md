@@ -4,8 +4,9 @@
 
 ## 功能
 
-- C# 代码编辑：左侧文本编辑器可直接修改 C# 代码。
+- C# 代码编辑：左侧使用 Monaco Editor，可直接修改 C# 代码。
 - Roslyn 全语法解析：后端通过 `Microsoft.CodeAnalysis.CSharp` 解析任意 C# 语法树并返回诊断。
+- C# LSP 风格能力：Monaco 对接 Roslyn 诊断、补全和悬停接口。
 - 方块式编程：右侧以嵌套方块展示语法结构，并可编辑字段、添加语句、删除语句或拖拽排序。
 - 常用语法工具箱：支持拖拽变量、赋值、调用、`if`、`return`、注释，以及 for/while/foreach/switch/try 等 Roslyn 原始语法模板。
 - 双向实时同步：修改代码会刷新方块；修改方块会重新生成 C# 代码。
@@ -18,11 +19,11 @@ src/
   core/parser/       本地 C# 方块 AST 解析 + Roslyn API 客户端
   core/serializer/   AST -> C# 文本
   blocks/            AST 与可视化方块的互转、工具箱、Roslyn 语法树面板
-  editor/            C# 文本编辑器
+  editor/            Monaco C# 编辑器与 Roslyn LSP 客户端
   sync/              代码/方块双向同步引擎
 
 server/
-  CsVisualTest.Roslyn/        Roslyn C# 语法解析 API
+  CsVisualTest.Roslyn/        Roslyn C# 语法解析 API + LSP 风格语言服务
   CsVisualTest.Roslyn.Tests/  Roslyn 服务单元测试
 ```
 

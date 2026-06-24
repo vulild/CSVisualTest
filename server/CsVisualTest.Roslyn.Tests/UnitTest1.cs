@@ -45,6 +45,51 @@ public class RoslynParserTests
         Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Line >= 1 && diagnostic.Column >= 1);
     }
 
+    [Fact]
+    public void GetDiagnostics_ReturnsMonacoFriendlyMarkers()
+    {
+        var service = new CSharpLanguageService();
+        var diagnostics = service.GetDiagnostics("class Broken { void Run( { }");
+
+        Assert.Contains(diagnostics, diagnostic => diagnostic.StartLineNumber >= 1 && diagnostic.StartColumn >= 1);
+    }
+
+    [Fact]
+    public async Task GetCompletionsAsync_ReturnsCSharpItems()
+    {
+        var service = new CSharpLanguageService();
+        var source = """
+            using System;
+
+            public class Demo
+            {
+                public void Run()
+                {
+                    Console.
+                }
+            }
+            """;
+        var response = await service.GetCompletionsAsync(source, source.IndexOf("Console.", StringComparison.Ordinal) + "Console.".Length);
+
+        Assert.Contains(response.Items, item => item.Label == "WriteLine");
+    }
+
+    [Fact]
+    public async Task GetHoverAsync_ReturnsSymbolInformation()
+    {
+        var service = new CSharpLanguageService();
+        var source = """
+            public class Demo
+            {
+                public int Count { get; set; }
+            }
+            """;
+        var hover = await service.GetHoverAsync(source, source.IndexOf("Count", StringComparison.Ordinal));
+
+        Assert.NotNull(hover);
+        Assert.Contains("Count", hover!.Contents);
+    }
+
     private static IEnumerable<string> FlattenKinds(RoslynSyntaxNodeDto node)
     {
         yield return node.Kind;
